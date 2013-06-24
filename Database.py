@@ -1,10 +1,4 @@
 ### DATABASE ###
-"""
-This file contains all the Database related functions. It is simpler to use
-and convenient. Instructions are below.
-"""
-
-### HOW TO CREATE/UPDATE THE DATABASE ###
 
 """
 SHORTCUT (CREATES MOST RECENT DATABASE):
@@ -15,35 +9,17 @@ SHORTCUT (CREATES MOST RECENT DATABASE):
 UPDATE DATABASE:
     >>> updateDatabase()
 
-
-0. REMOVING TABLES: THIS APPLIES IF YOU ALREADY HAVE AN EXISTING DATABASE:
-    If you are going to create/re-create all the tables(cloud, light1, light2..
-    nasalight1...etc.), use the SHORTCUT.
-    
-    Otherwise, if you are going to only re-create only some tables, open python:
-
-    >>>connection = sqlite3.connect('data.db')
-    >>>cursor = connection.cursor()
-    >>>cursor.execute('DROP TABLE tablename')
-
-        If you are dropping light1, then the command would be DROP TABLE light1
-        Choose the table you would like to drop. You can drop multiple.
-    
+REMOVING TABLES: THIS APPLIES IF YOU ALREADY HAVE AN EXISTING DATABASE:
+      >>>drop_tables('tablename1', 'tablename2',...)    
         
-1. CREATING SOME TABLES:
-    To create/re-create some of the tables, run the command:
+CREATING SOME TABLES:
     >>> create_tables('tablename') 
 
-
-2. CLOUD DATA: If you have droppped table cloud, perform this step.
-                Otherwise, proceed to Step 3.
-    
+CLOUD DATA:
     >>> createCloudData()
 
-3. LIGHT DATA: This will input all the sensor light data. Even if you only
-                dropped one light table, you can run this command. It will
-                simply ignore putting in the values for the other light tables. 
-
+LIGHT DATA: This will input all the sensor light data. Even if you only
+                dropped one light table, you can run this command. 
     >>> createLightData()
 
     If you would like to change the smoothing function operations,
@@ -51,20 +27,19 @@ UPDATE DATABASE:
 
     >>>createLightData()
     
-
+ARTIFICIAL DATA:
+    >>>create_artificial()
 """
 
 ### QUERYING FROM THE DATABASE ###
 
 """
-
 Values in the Light Tables you can Request:
                 unixtime REAL, weekday TEXT,
                 day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
                 minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
-                azimuth REAL, cloudiness TEXT, x REAL, y REAL, error2_1 REAL,
-                error2_2 REAL, error5_1 REAL, error5_2 REAL, error10_1 REAL,
-                error10_2 REAL, exponential REAL, average REAL
+                azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                average REAL, daylight REAL, maxlight REAL, 
 
 
 Values in the Cloud Table you can Request:
@@ -72,6 +47,13 @@ Values in the Cloud Table you can Request:
                 INTEGER, day INTEGER, hour INTEGER, minute INTEGER,
                 seconds INTEGER, unixtime REAL, cloudiness TEXT,
                 cloudvalue REAL, daycloudvalue REAL
+
+Values in the Artificial Light Tables you can Request:
+                unixtime REAL, weekday TEXT,
+                day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                azimuth REAL, cloudiness TEXT, x REAL, y REAL, average REAL
+
 
 connection = sqlite3.connect('data.db')
 cursor = connection.cursor()
@@ -109,6 +91,16 @@ from sqlite3 import dbapi2 as sqlite3
 ### CREATE TABLE CODE ####
 ##########################
 
+def drop_tables(*args):
+    connection = sqlite3.connect('data.db')
+    cursor = connection.cursor()
+    arguments = [args]
+    for elem in arguments[0]:
+        connection = sqlite3.connect('data.db')
+        cursor.execute('DROP TABLE ' + elem)
+    connection.commit()        
+
+
 def create_tables(table = all):
 
         
@@ -125,38 +117,56 @@ def create_tables(table = all):
                         INTEGER, unixtime REAL, cloudiness TEXT, cloudvalue REAL, daycloudvalue REAL,PRIMARY KEY
                         (year, month, day, hour, minute, seconds))''')
 
+        #Create one table per artificial light level
+        cursor.execute('''CREATE TABLE lighta (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, x REAL, y REAL,average REAL,
+                        PRIMARY KEY (unixtime))''')
+        cursor.execute('''CREATE TABLE lightb (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, x REAL, y REAL, average REAL,
+                        PRIMARY KEY (unixtime))''')
+        cursor.execute('''CREATE TABLE lightc (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, x REAL, y REAL,average REAL,
+                        PRIMARY KEY (unixtime))''')
+        cursor.execute('''CREATE TABLE lightd (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, x REAL, y REAL,average REAL,
+                        PRIMARY KEY (unixtime))''')
+        
 
         #Create one table per sensor for light measurement data
         cursor.execute('''CREATE TABLE light1 (unixtime REAL, weekday TEXT,
                         day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
                         minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
-                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, error2_1 REAL,
-                        error2_2 REAL, error5_1 REAL, error5_2 REAL, error10_1 REAL,
-                        error10_2 REAL, exponential REAL, average REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL, 
                         PRIMARY KEY (unixtime))''')
 
         cursor.execute('''CREATE TABLE light2 (unixtime REAL, weekday TEXT,
-                day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
-                minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
-                azimuth REAL, cloudiness TEXT, x REAL, y REAL, error2_1 REAL,
-                error2_2 REAL, error5_1 REAL, error5_2 REAL, error10_1 REAL,
-                error10_2 REAL, exponential REAL, average REAL,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
                 PRIMARY KEY (unixtime))''')
 
         cursor.execute('''CREATE TABLE light3 (unixtime REAL, weekday TEXT,
-                day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
-                minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
-                azimuth REAL, cloudiness TEXT, x REAL, y REAL, error2_1 REAL,
-                error2_2 REAL, error5_1 REAL, error5_2 REAL, error10_1 REAL,
-                error10_2 REAL, exponential REAL, average REAL,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
                 PRIMARY KEY (unixtime))''')
 
         cursor.execute('''CREATE TABLE light4 (unixtime REAL, weekday TEXT,
-                day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
-                minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
-                azimuth REAL, cloudiness TEXT, x REAL, y REAL, error2_1 REAL,
-                error2_2 REAL, error5_1 REAL, error5_2 REAL, error10_1 REAL,
-                error10_2 REAL, exponential REAL, average REAL,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
                 PRIMARY KEY (unixtime))''')
 
         #Light tables for NASA
@@ -164,97 +174,211 @@ def create_tables(table = all):
         cursor.execute('''CREATE TABLE nasalight1 (unixtime REAL, weekday TEXT,
                         day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
                         minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
-                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, error2_1 REAL,
-                        error2_2 REAL, error5_1 REAL, error5_2 REAL, error10_1 REAL,
-                        error10_2 REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
                         PRIMARY KEY (unixtime))''')
 
         cursor.execute('''CREATE TABLE nasalight2 (unixtime REAL, weekday TEXT,
                         day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
                         minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
-                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, error2_1 REAL,
-                        error2_2 REAL, error5_1 REAL, error5_2 REAL, error10_1 REAL,
-                        error10_2 REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
                         PRIMARY KEY (unixtime))''')
 
         cursor.execute('''CREATE TABLE nasalight3 (unixtime REAL, weekday TEXT,
                         day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
                         minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
-                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, error2_1 REAL,
-                        error2_2 REAL, error5_1 REAL, error5_2 REAL, error10_1 REAL,
-                        error10_2 REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
                         PRIMARY KEY (unixtime))''')
 
         cursor.execute('''CREATE TABLE nasalight4 (unixtime REAL, weekday TEXT,
                         day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
                         minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
-                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, error2_1 REAL,
-                        error2_2 REAL, error5_1 REAL, error5_2 REAL, error10_1 REAL,
-                        error10_2 REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
+                        
                         PRIMARY KEY (unixtime))''')
 
         cursor.execute('''CREATE TABLE nasalight5 (unixtime REAL, weekday TEXT,
                         day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
                         minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
-                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, error2_1 REAL,
-                        error2_2 REAL, error5_1 REAL, error5_2 REAL, error10_1 REAL,
-                        error10_2 REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
                         PRIMARY KEY (unixtime))''')
 
         cursor.execute('''CREATE TABLE nasalight6 (unixtime REAL, weekday TEXT,
                         day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
                         minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
-                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, error2_1 REAL,
-                        error2_2 REAL, error5_1 REAL, error5_2 REAL, error10_1 REAL,
-                        error10_2 REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
                         PRIMARY KEY (unixtime))''')
 
         cursor.execute('''CREATE TABLE nasalight7 (unixtime REAL, weekday TEXT,
                         day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
                         minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
-                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, error2_1 REAL,
-                        error2_2 REAL, error5_1 REAL, error5_2 REAL, error10_1 REAL,
-                        error10_2 REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
                         PRIMARY KEY (unixtime))''')
 
         cursor.execute('''CREATE TABLE nasalight8 (unixtime REAL, weekday TEXT,
                         day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
                         minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
-                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, error2_1 REAL,
-                        error2_2 REAL, error5_1 REAL, error5_2 REAL, error10_1 REAL,
-                        error10_2 REAL, 
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
                         PRIMARY KEY (unixtime))''')
 
         cursor.execute('''CREATE TABLE nasalight9 (unixtime REAL, weekday TEXT,
                         day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
                         minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
-                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, error2_1 REAL,
-                        error2_2 REAL, error5_1 REAL, error5_2 REAL, error10_1 REAL,
-                        error10_2 REAL, 
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
                         PRIMARY KEY (unixtime))''')
 
+    elif table == 'alllight':
+        
+        #Create one table per sensor for light measurement data
+
+        cursor.execute('''CREATE TABLE light1 (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL, 
+                        PRIMARY KEY (unixtime))''')
+
+        cursor.execute('''CREATE TABLE light2 (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
+                PRIMARY KEY (unixtime))''')
+
+        cursor.execute('''CREATE TABLE light3 (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
+                PRIMARY KEY (unixtime))''')
+
+        cursor.execute('''CREATE TABLE light4 (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
+                PRIMARY KEY (unixtime))''')
+
+        #Light tables for NASA
+
+        cursor.execute('''CREATE TABLE nasalight1 (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
+                        PRIMARY KEY (unixtime))''')
+
+        cursor.execute('''CREATE TABLE nasalight2 (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
+                        PRIMARY KEY (unixtime))''')
+
+        cursor.execute('''CREATE TABLE nasalight3 (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
+                        PRIMARY KEY (unixtime))''')
+
+        cursor.execute('''CREATE TABLE nasalight4 (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
+                        
+                        PRIMARY KEY (unixtime))''')
+
+        cursor.execute('''CREATE TABLE nasalight5 (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
+                        PRIMARY KEY (unixtime))''')
+
+        cursor.execute('''CREATE TABLE nasalight6 (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
+                        PRIMARY KEY (unixtime))''')
+
+        cursor.execute('''CREATE TABLE nasalight7 (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
+                        PRIMARY KEY (unixtime))''')
+
+        cursor.execute('''CREATE TABLE nasalight8 (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
+                        PRIMARY KEY (unixtime))''')
+
+        cursor.execute('''CREATE TABLE nasalight9 (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
+                        PRIMARY KEY (unixtime))''')
+
+        
 
     elif table == 'cloud':
         cursor.execute('''CREATE TABLE cloud (timezone TEXT, year INTEGER, month
                         INTEGER, day INTEGER, hour INTEGER, minute INTEGER, seconds
-                        INTEGER, unixtime REAL, cloudiness TEXT, cloudvalue REAL, daycloudvalue REAL,PRIMARY KEY
-                        (year, month, day, hour, minute, seconds))''')
-    else:
-        cursor.execute('''CREATE TABLE ''' + table + ''' (unixtime REAL, weekday TEXT,
+                        INTEGER, unixtime REAL, cloudiness TEXT, cloudvalue REAL, daycloudvalue REAL,
+                        PRIMARY KEY(year, month, day, hour, minute, seconds))''')
+
+    elif table == 'artificial':
+        
+        cursor.execute('''CREATE TABLE lighta (unixtime REAL, weekday TEXT,
                         day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
                         minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
-                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, error2_1 REAL,
-                        error2_2 REAL, error5_1 REAL, error5_2 REAL, error10_1 REAL,
-                        error10_2 REAL, 
+                        azimuth REAL, x REAL, y REAL, average REAL,
+                        PRIMARY KEY (unixtime))''')
+        cursor.execute('''CREATE TABLE lightb (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, x REAL, y REAL, average REAL,
+                        PRIMARY KEY (unixtime))''')
+        cursor.execute('''CREATE TABLE lightc (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, x REAL, y REAL, average REAL,
+                        PRIMARY KEY (unixtime))''')
+        cursor.execute('''CREATE TABLE lightd (unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, x REAL, y REAL, average REAL,
+                        PRIMARY KEY (unixtime))''')
+    
+    else:
+        cursor.execute('''CREATE TABLE ''' + table + '''(unixtime REAL, weekday TEXT,
+                        day INTEGER, month INTEGER, year INTEGER, hour INTEGER,
+                        minute INTEGER, seconds INTEGER, light REAL, altitude REAL,
+                        azimuth REAL, cloudiness TEXT, x REAL, y REAL, exponential REAL,
+                        average REAL, daylight REAL,maxlight REAL,
                         PRIMARY KEY (unixtime))''')
         
 
     #Save your changes
     connection.commit()
 
-###############################
-### CREATE CLOUD TABLE CODE ###
-###############################
+##################
+### CLOUD DATA ###
+##################
 
 cloudiness=['Clear','Partly','Scattered','Light','Mostly','Rain','Overcast','Heavy','Fog','Haze']
 values=[0,2,4,4,7,7,8,8,4,4]
@@ -408,10 +532,9 @@ def day_cloudiness():
             average = 'nan'
         cursor.execute('UPDATE cloud SET daycloudvalue = ? WHERE unixtime = ? ', (average, elem))
     connection.commit()
-    
       
 
-def createCloudData(end = strftime('%Y %m %d', time.localtime()), start = "2012 09 07", feature = "history", station = "KOAK"):
+def createCloudData(end = strftime('%Y %m %d', time.localtime()), start = "2012 05 01", feature = "history", station = "KOAK"):
     """Adds all the wunderground data to the cloud data starting from start
     date START until end date END. You can specify the feature FEATURE to pull
     either historical data or hourly data. You also must specify the weather
@@ -496,9 +619,9 @@ def updateCloudData():
     createCloudData(end, start)
 
 
-#############################################        
-### CREATE LIGHT TABLES CODE ################
-#############################################
+######################################        
+### LIGHT TABLES CODE ################
+######################################
 
 #lat and lon global variables of BEST lab
 best_lat = "37 52 27.447"
@@ -519,7 +642,9 @@ def change_loc(sens_no, nasa, new):
         sensors_loc[sens_no] = new
 
 #Dictionary that maps each BEST lab sensor number to its location (x, y)
-sensors_loc = {1:(0,0), 2:(0,1), 3:(1,0), 4:(1,1)}
+sensors_loc = {1:(0,0), 2:(0,1), 3:(1,0), 4:(1,1), '1old':(1,2), '2old':(2,1),
+               '3old':(2,0), '4old':(0,2), 'a': (3,1), 'b': (4,2), 'c': (5,2), 'd':
+               (9,0)}
 
 #Dictionary that maps each NASA lab sensor number to its location (x, y)
 nasa_sensors_loc = {1:(0,0), 2:(0,1), 3:(1,0), 4:(1,1), 5:(1,2), 6:(2,1),
@@ -529,7 +654,11 @@ nasa_sensors_loc = {1:(0,0), 2:(0,1), 3:(1,0), 4:(1,1), 5:(1,2), 6:(2,1),
 sensors_dict = {1:"7140b2da-94cd-5bae-a1e8-cb85a6715bf5",
                 2:"f862a13d-91ee-5696-b2b1-b97d81a47b5b",
                 3:"b92ddaee-48de-5f37-82ed-fe1f0922b0e5",
-                4:"8bb0b6a2-971f-54dc-9e19-14424b9a1764"}
+                4:"8bb0b6a2-971f-54dc-9e19-14424b9a1764",
+                '1old':'27cfdd4e-c0dd-5ba8-85fd-5b4f063f872f',
+                '2old':'310eea9e-8634-54b6-bd5e-8d711e86531d',
+                '3old':'46e7060b-a5c8-58b7-8708-4ecaddbafb6b',
+                '4old':'f71e64e5-b27c-51b2-8ac4-f56db13aa059'}
 
 #Dictionary that maps each NASA lab sensor number to its sensor ID.
 nasa_sensors_dict = {1:"6325ce7e-5afe-5301-bf11-391f10703998",
@@ -727,7 +856,7 @@ def fill_gaps(timestamp, reading, unixtime):
         counter = counter + 1
     return timestamp, reading, newunixtime
 
-def createData(sens_no, nasa, start, end, lat, lon, timezon):
+def createData(sens_no, old, nasa, start, end, lat, lon, timezon):
     """This function adds data for BEST lab sensor SENS_NO into its
     respective light table starting from unix timestamp (in milliseconds)
     START and ending at unix timestamp (in milliseconds) END. It generates
@@ -740,6 +869,10 @@ def createData(sens_no, nasa, start, end, lat, lon, timezon):
     """
     connection = sqlite3.connect('data.db')
     cursor = connection.cursor()
+    if old:
+        sensorID = sensors_dict[str(sens_no)+'old']
+        sensorLoc = sensors_loc[str(sens_no) + 'old']
+        table = "light" + str(sens_no)
     if nasa:
         sensorID = nasa_sensors_dict[sens_no]
         sensorLoc = nasa_sensors_loc[sens_no]
@@ -765,177 +898,155 @@ def createData(sens_no, nasa, start, end, lat, lon, timezon):
                                ' AND year = ' + str(time[3]) + ' AND hour = ' +
                                str(time[4]))
         cloudiness = cloud.fetchone()
-        if nasa == False:
-            if cloudiness is not None:
-                to_db = [unixtime[count], time[0], time[1], time[2], time[3],
-                         time[4], time[5],time[6], reading[count], sunpos[0],
-                         sunpos[1], str(cloudiness[0]), x, y, float('NaN'),
-                         float('NaN'), float('NaN'), float('NaN'), float('NaN'),
-                         float('NaN'),float('Nan'),float('Nan')]
-            else:
-                to_db = [unixtime[count], time[0], time[1], time[2], time[3],
-                         time[4], time[5],time[6], reading[count], sunpos[0],
-                         sunpos[1], "None", x, y, float('NaN'), float('NaN'),
-                         float('NaN'), float('NaN'), float('NaN'), float('NaN'),
-                         float('Nan'),float('Nan')]
-            cursor.execute('INSERT OR IGNORE INTO ' + table +
-                           ' VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                           to_db)
+        if cloudiness is not None:
+            to_db = [unixtime[count], time[0], time[1], time[2], time[3],
+                     time[4], time[5],time[6], reading[count], sunpos[0],
+                     sunpos[1], str(cloudiness[0]), x, y, float('NaN'),
+                     float('NaN'), float('NaN'), float('NaN')]
         else:
-            if cloudiness is not None:
-                to_db = [unixtime[count], time[0], time[1], time[2], time[3],
-                         time[4], time[5],time[6], reading[count], sunpos[0],
-                         sunpos[1], str(cloudiness[0]), x, y, float('NaN'),
-                         float('NaN'), float('NaN'), float('NaN'), float('NaN'),
-                         float('NaN')]
-            else:
-                to_db = [unixtime[count], time[0], time[1], time[2], time[3],
-                         time[4], time[5],time[6], reading[count], sunpos[0],
-                         sunpos[1], "None", x, y, float('NaN'), float('NaN'),
-                         float('NaN'), float('NaN'), float('NaN'), float('NaN')]
-            cursor.execute('INSERT OR IGNORE INTO ' + table +
-                           ' VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                           to_db)
+            to_db = [unixtime[count], time[0], time[1], time[2], time[3],
+                     time[4], time[5],time[6], reading[count], sunpos[0],
+                     sunpos[1], "None", x, y, float('NaN'), float('NaN'),
+                     float('NaN'), float('NaN')]
+        cursor.execute('INSERT OR IGNORE INTO ' + table +
+                       ' VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                       to_db)
+        
     cursor.execute('DELETE FROM ' + str(table) + ' WHERE light > 25000')
     connection.commit()
 
     
-def smoothinglight1exp():
-    connection = sqlite3.connect('data.db')
-    cursor = connection.cursor()
-    x = smoothing(1, False, 'exponential')
-    for elem in x:
-        cursor.execute('UPDATE light1 SET exponential = ' + str(elem[0]) + ' WHERE unixtime = ' + str(elem[1]))
-    connection.commit()
-
-def smoothinglight1avg():
-    connection = sqlite3.connect('data.db')
-    cursor = connection.cursor()
-    y = smoothing (1, False, 'average')
-    for elem in y:
-        cursor.execute('UPDATE light1 SET average = ' + str(elem[0]) + ' WHERE unixtime = ' + str(elem[1]))
-    connection.commit()
-
     
-def smoothinglight2exp():
-    connection = sqlite3.connect('data.db')
-    cursor = connection.cursor()
-    x = smoothing(2, False, 'exponential')
-    for elem in x:
-        cursor.execute('UPDATE light2 SET exponential = ' + str(elem[0]) + ' WHERE unixtime = ' + str(elem[1]))
-    connection.commit()
-
-    
-def smoothinglight3exp():
-    connection = sqlite3.connect('data.db')
-    cursor = connection.cursor()
-    x = smoothing(3, False, 'exponential')
-    for elem in x:
-        cursor.execute('UPDATE light3 SET exponential = ' + str(elem[0]) + ' WHERE unixtime = ' + str(elem[1]))
-    connection.commit()
-
-    
-def smoothinglight4exp():
-    connection = sqlite3.connect('data.db')
-    cursor = connection.cursor()
-    x = smoothing(4, False, 'exponential')
-    for elem in x:
-        cursor.execute('UPDATE light4 SET exponential = ' + str(elem[0]) + ' WHERE unixtime = ' + str(elem[1]))
-    connection.commit()
-
-def smoothinglight2avg():
-    connection = sqlite3.connect('data.db')
-    cursor = connection.cursor()
-    y = smoothing (2, False, 'average')
-    for elem in y:
-        cursor.execute('UPDATE light2 SET average = ' + str(elem[0]) + ' WHERE unixtime = ' + str(elem[1]))
-    connection.commit()
-
-def smoothinglight3avg():
-    connection = sqlite3.connect('data.db')
-    cursor = connection.cursor()
-    y = smoothing (3, False, 'average')
-    for elem in y:
-        cursor.execute('UPDATE light3 SET average = ' + str(elem[0]) + ' WHERE unixtime = ' + str(elem[1]))
-    connection.commit()
-
-def smoothinglight4avg():
-    connection = sqlite3.connect('data.db')
-    cursor = connection.cursor()
-    y = smoothing (1, False, 'average')
-    for elem in y:
-        cursor.execute('UPDATE light4 SET average = ' + str(elem[0]) + ' WHERE unixtime = ' + str(elem[1]))
-    connection.commit()
-
-
-def createLightData():
-    createAllData()
-    print("Smoothing light1")
-    smoothinglight1exp()
-    smoothinglight1avg()
-    print("Smoothing light2")
-    smoothinglight2exp()
-    smoothinglight2avg()
-    print("Smoothing light3")
-    smoothinglight3exp()
-    smoothinglight3avg()
-    print("Smoothing light4")
-    smoothinglight4exp()
-    smoothinglight4avg()
-
-
 def createAllData():
     """Adds all the data starting from the beginning of data collection
     until the current time for BEST lab sensors 2, 3, and 4 and Nasa ."""
     connection = sqlite3.connect('data.db')
     cursor = connection.cursor()
-    createData(1, False, "1347059530000", str(int(time.time())*1000),
+
+    #Older Data
+    createData(1, True,False,"1355616600000","1359446399000",best_lat, best_lon, best_timezone)
+    createData(2, True, False,"1355616600000","1359446399000",best_lat, best_lon, best_timezone)
+    createData(3, True,False,"1355616600000","1359446399000",best_lat, best_lon, best_timezone)
+    createData(4, True,False,"1355616600000","1359446399000",best_lat, best_lon, best_timezone)
+
+    #Current Data
+    createData(1, False,False, "1347059530000", str(int(time.time())*1000),
                best_lat, best_lon, best_timezone)
-    createData(2, False, "1349478489000", str(int(time.time())*1000),
+    createData(2,False, False, "1349478489000", str(int(time.time())*1000),
                best_lat, best_lon, best_timezone)
-    createData(3, False, "1353545153000", str(int(time.time())*1000),
+    createData(3,False, False, "1353545153000", str(int(time.time())*1000),
                best_lat, best_lon, best_timezone)
-    createData(4, False, "1353545237000", str(int(time.time())*1000),
+    createData(4,False, False, "1353545237000", str(int(time.time())*1000),
                best_lat, best_lon, best_timezone)
-    createData(1, True, "1335859200000", str(int(time.time())*1000), nasa_lat,
+    createData(1, False,True, "1335859200000", str(int(time.time())*1000), nasa_lat,
                nasa_lon, nasa_timezone)
-    createData(2, True, "1335859200000", str(int(time.time())*1000), nasa_lat,
+    createData(2, False,True, "1335859200000", str(int(time.time())*1000), nasa_lat,
                nasa_lon, nasa_timezone)
-    createData(3, True, "1335859200000", str(int(time.time())*1000), nasa_lat,
+    createData(3, False,True, "1335859200000", str(int(time.time())*1000), nasa_lat,
                nasa_lon, nasa_timezone)
-    createData(4, True, "1335859200000", str(int(time.time())*1000), nasa_lat,
+    createData(4, False,True, "1335859200000", str(int(time.time())*1000), nasa_lat,
                nasa_lon, nasa_timezone)
-    createData(5, True, "1335859200000", str(int(time.time())*1000), nasa_lat,
+    createData(5, False,True, "1335859200000", str(int(time.time())*1000), nasa_lat,
                nasa_lon, nasa_timezone)
-    createData(6, True, "1335859200000", str(int(time.time())*1000), nasa_lat,
+    createData(6, False,True, "1335859200000", str(int(time.time())*1000), nasa_lat,
                nasa_lon, nasa_timezone)
-    createData(7, True, "1335859200000", str(int(time.time())*1000), nasa_lat,
+    createData(7, False,True, "1335859200000", str(int(time.time())*1000), nasa_lat,
                nasa_lon, nasa_timezone)
-    createData(8, True, "1335859200000", str(int(time.time())*1000), nasa_lat,
+    createData(8, False,True, "1335859200000", str(int(time.time())*1000), nasa_lat,
                nasa_lon, nasa_timezone)
-    createData(9, True, "1335859200000", str(int(time.time())*1000), nasa_lat,
+    createData(9, False,True, "1335859200000", str(int(time.time())*1000), nasa_lat,
                nasa_lon, nasa_timezone)
+    
     #Save your changes
     connection.commit()
+
+def smoothingtables():
+    connection = sqlite3.connect('data.db')
+    cursor = connection.cursor()
+    tables = [1,2,3,4]
+    types = ['exponential', 'average']
+    for elem in tables:
+        table = 'light' + str(elem)
+        print table
+        for element in types:
+            connection = sqlite3.connect('data.db')
+            cursor = connection.cursor()
+            x = smoothing(elem, False, element)
+            for part in x:
+                cursor.execute('UPDATE ' + str(table) + ' SET ' + str(element) + ' = ' + str(part[0]) + ' WHERE unixtime = ' + str(part[1]))
+            connection.commit()
+    nasa_tables = [1,2,3,4,5,6,7,8,9]
+    for elem in nasa_tables:
+        table = 'nasalight' + str(elem)
+        print table
+        for element in types:
+            connection = sqlite3.connect('data.db')
+            cursor = connection.cursor()
+            x = smoothing(elem, True, element)
+            for part in x:
+                cursor.execute('UPDATE ' + str(table) + ' SET ' + str(element) + ' = ' + str(part[0]) + ' WHERE unixtime = ' + str(part[1]))
+            connection.commit()
+
+
+
+def createLightData():
+    createAllData()
+    print 'Smoothing Light Tables'
+    smoothingtables()
+    connection = sqlite3.connect('data.db')
+    cursor = connection.cursor()
+    cursor.execute('DELETE FROM light1 WHERE light > 12000')
+    cursor.execute('DELETE FROM light1 WHERE light > 12000')
+    cursor.execute('DELETE FROM light1 WHERE light > 12000')
+    cursor.execute('DELETE FROM light1 WHERE light > 12000')
+    cursor.execute('DELETE FROM nasalight1 WHERE light > 12000')
+    cursor.execute('DELETE FROM nasalight2 WHERE light > 12000')
+    cursor.execute('DELETE FROM nasalight3 WHERE light > 12000')
+    cursor.execute('DELETE FROM nasalight4 WHERE light > 12000')
+    cursor.execute('DELETE FROM nasalight5 WHERE light > 12000')
+    cursor.execute('DELETE FROM nasalight6 WHERE light > 12000')
+    cursor.execute('DELETE FROM nasalight7 WHERE light > 12000')
+    cursor.execute('DELETE FROM nasalight8 WHERE light > 12000')
+    cursor.execute('DELETE FROM nasalight9 WHERE light > 12000')
+    connection.commit()
+    
+    """
+    Note: This part of the code has been commented out because it takes a long time.
+    To fill these columns in the database, remove the red hashtags. 
+    """
+
+    #max_light(1, False)
+    #max_light(2, False)
+    #max_light(3, False)
+    #max_light(4, False)
+
+    #print("Averaging light1")
+    #average_light(1, False)
+    #print("Averaging light2")
+    #average_light(2, False)
+    #print("Averaging light3")
+    #average_light(3, False)
+    #print("Averaging light4")
+    #average_light(4, False)
 
 def updateLightData():
     """Updates all the data in BEST lab sensors 2, 3, and 4 by calling
     updateData on each sensor."""
-    updateData(1, False, best_lat, best_lon, best_timezone)
-    updateData(2, False, best_lat, best_lon, best_timezone)
-    updateData(3, False, best_lat, best_lon, best_timezone)
-    updateData(4, False, best_lat, best_lon, best_timezone)
-    updateData(1, True, nasa_lat, nasa_lon, nasa_timezone)
-    updateData(2, True, nasa_lat, nasa_lon, nasa_timezone)
-    updateData(3, True, nasa_lat, nasa_lon, nasa_timezone)
-    updateData(4, True, nasa_lat, nasa_lon, nasa_timezone)
-    updateData(5, True, nasa_lat, nasa_lon, nasa_timezone)
-    updateData(6, True, nasa_lat, nasa_lon, nasa_timezone)
-    updateData(7, True, nasa_lat, nasa_lon, nasa_timezone)
-    updateData(8, True, nasa_lat, nasa_lon, nasa_timezone)
-    updateData(9, True, nasa_lat, nasa_lon, nasa_timezone)
+    updateData(1, False,False, best_lat, best_lon, best_timezone)
+    updateData(2, False,False, best_lat, best_lon, best_timezone)
+    updateData(3, False,False, best_lat, best_lon, best_timezone)
+    updateData(4, False,False, best_lat, best_lon, best_timezone)
+    updateData(1, False,True, nasa_lat, nasa_lon, nasa_timezone)
+    updateData(2, False,True, nasa_lat, nasa_lon, nasa_timezone)
+    updateData(3, False,True, nasa_lat, nasa_lon, nasa_timezone)
+    updateData(4, False,True, nasa_lat, nasa_lon, nasa_timezone)
+    updateData(5, False,True, nasa_lat, nasa_lon, nasa_timezone)
+    updateData(6, False,True, nasa_lat, nasa_lon, nasa_timezone)
+    updateData(7, False,True, nasa_lat, nasa_lon, nasa_timezone)
+    updateData(8, False,True, nasa_lat, nasa_lon, nasa_timezone)
+    updateData(9, False,True, nasa_lat, nasa_lon, nasa_timezone)
 
-def updateData(sens_no, nasa, lat, lon, timezon):
+def updateData(sens_no, old, nasa, lat, lon, timezon):
     """Updates all the data starting from the time of the latest entry of
     each time table until the current time for BEST lab sensor number
     SENS_NO. It generates sunposition data using the given LAT, LON, and
@@ -965,11 +1076,57 @@ def updateData(sens_no, nasa, lat, lon, timezon):
     print("limit is:" + str(limit))
     print("Start is:" + str(start))
     print("End is:" + str(end))
-    createData(sens_no, start, end)
+    createData(sens_no, old, nasa, start, end,lat, lon, timezon)
     #Save your changes
     connection.commit()
 
 
+# Include Maximum Light Level in Database
+def max_light(sensor, nasa):
+    if nasa:
+        table = 'nasalight' + str(sensor)
+    else:
+        table = 'light' + str(sensor)
+    connection = sqlite3.connect('data.db')
+    cursor = connection.cursor()
+    for month in range(9,13):
+        for day in range(1,32):
+            x = cursor.execute('SELECT MAX(light) FROM ' + table + ' WHERE day = ' + str(day) + ' AND month = ' + str(month) + ' AND year = 2012')
+            maxlight = x.fetchall()[0][0]
+            cursor.execute('UPDATE ' + table + ' SET maxlight = ? WHERE day = ? AND month = ? and year = 2012 ', (maxlight, day, month))
+    print('Done with 2012')
+    connection.commit()    
+    for month in range(1,7):
+        for day in range(1,32):
+            x = cursor.execute('SELECT MAX(light) FROM ' + table + ' WHERE day = ' + str(day) + ' AND month = ' + str(month) + ' AND year = 2012')
+            maxlight = x.fetchall()[0][0]
+            cursor.execute('UPDATE ' + table + ' SET maxlight = ? WHERE day = ? AND month = ? and year = 2012 ', (maxlight, day, month))
+    print('Done with 2013')
+    connection.commit()
+
+
+#Include Average Light Level in Database
+
+def average_light(sensor, nasa):
+    if nasa:
+        table = 'nasalight' + str(sensor)
+    else:
+        table = 'light' + str(sensor)
+    connection = sqlite3.connect('data.db')
+    cursor = connection.cursor()
+    for month in range(9,13):
+        for day in range(1,32):
+            x = cursor.execute('SELECT AVG(light) FROM ' + table + ' WHERE altitude > -5 AND day = ' + str(day) + ' AND month = ' + str(month) + ' AND year = 2012')
+            average =  x.fetchall()[0][0]
+            cursor.execute('UPDATE ' + table + ' SET daylight = ? WHERE day = ? AND month = ? and year = 2012 ', (average, day, month))
+            connection.commit()
+    for month in range(1,7):
+        for day in range(1,32):
+            x = cursor.execute('SELECT AVG(light) FROM ' + table + ' WHERE altitude > -5 AND day = ' + str(day) + ' AND month = ' + str(month) + ' AND year = 2013')
+            average =  x.fetchall()[0][0]
+            cursor.execute('UPDATE ' + table + ' SET daylight = ? WHERE day = ? AND month = ? and year = 2013 ', (average, day, month))
+            connection.commit()
+            
 
 #######################
 ### TIMESERIES CODE ###
@@ -1083,19 +1240,117 @@ def smoothing(moteNum, nasa, smoothtype, movingStatsWindow=8, expWindow=12, Alph
 
     return output
 
+##############################
+### ARTIFICIAL LIGHT DATA  ###
+##############################
+
+LightA = [(1337950800000,100), (1337997900000, 100), (1337998260000,0),(1338210000000,100),
+
+        (1338257100000,100),(1338257460000,0),(1338296400000,100),(1338343500000,100),
+
+        (1338343860000,0),(1338382800000,100),(1338426900000,0),(1338429900000,0),
+
+        (1338469200000,100),(1338516300000,100),(1338516600000,0),(1338555600000,100),
+
+        (1338602700000,100),(1338603060000,0),(1338814800000,100),(1338861900000,100),
+
+        (1338862260000,0),(1338901200000,100),(1338948300000,100),(1338948660000,0),
+
+        (1338987600000,100),(1339034700000,100),(1339035000000,0),(1339074000000,100),
+
+        (1339121100000,100),(1339121460000, 0),(1339160400000, 100),(1339171440000,0)]
+
+LightB = [(1337950800000,100),(1337997900000,100),(1337998260000,0), (1338210000000,100),
+          (1338257100000,100),(1338257460000,0),(1338296400000,100),(1338343500000,100),
+          (1338343860000,0),(1338382800000,100),(1338426900000,88),(1338426960000,0),
+          (1338429900000,0),(1338469200000,100),(1338516300000,100),(1338516600000,0),
+          (1338555600000,100),(1338602700000,100),(1338603060000,0),(1338814800000,100),
+          (1338861900000,100),(1338862260000,0),(1338901200000,100),(1338948300000,100),
+          (1338948660000,0),(1338987600000,100),(1339034700000,100),(1339035000000,0),
+          (1339074000000,100),(1339121100000,100),(1339121460000, 0),(1339160400000, 100),
+          (1339171440000,100),(1339205460000,0)]
+
+LightC = [(1337950800000,100), (1337997900000, 100), (1337998260000,0),(1338210000000,100),
+          (1338257100000,100),(1338257460000,0),(1338296400000,100),(1338343500000,100),
+          (1338343860000,0),(1338382800000,100),(1338391320000, 0),(1338426900000,0),
+          (1338429900000,0),(1338430260000,0),(1338469200000,100),(1338516300000,100),
+          (1338516600000,0),(1338555600000,100),(1338602700000,100),(1338603060000,0),(1338814800000,100),
+          (1338861900000,100),(1338862260000,0),(1338901200000,100),(1338948300000,100),(1338948660000,0),
+          (1338987600000,100),(1339034700000,100),(1339035000000,0),(1339074000000,100),(1339081980000,0),
+          (1339121100000,0),(1339160400000, 100),(1339205460000,0)]
+
+
+LightD = [(1337950800000,100), (1337997900000, 100), (1337998260000,0),(1338210000000,100),
+          (1338257100000,100),(1338257460000,0),(1338296400000,100),(1338343500000,100),
+          (1338343860000,0),(1338382800000,100),(1338391320000,0),(1338426900000,0),
+          (1338429900000,0),(1338430260000,0),(1338469200000,100),(1338516300000,100),
+          (1338516600000,0),(1338555600000,100),(1338602700000,100),(1338603060000,0),
+          (1338814800000,100),(1338861900000,100),(1338862600000,0),(1338901200000,100),
+          (1338933960000,0),(1338948300000,0),(1338987600000,100),(1339003200000,0),
+          (1339034700000,0),(1339074000000,100),(1339081980000,0),(1339121100000,0),
+          (1339160400000,100),(1339171020000,0)]
+
+
+def create_artificial():
+    letters = ['a','b','c','d']
+    for elem in letters:
+        table = 'light' + str(elem)
+        print table
+        if table == 'lighta':
+            data = LightA
+        if table == 'lightb':
+            data = LightB
+        if table == 'lightc':
+            data == LightC
+        if table == 'lightd':
+            data == LightD
+        connection = sqlite3.connect('data.db')
+        cursor = connection.cursor()
+        i = 0
+        while i < (len(data) - 1):
+            unix = data[i][0]
+            artificial = data[i][1]
+            next_unix = data[i+1][0]
+            while unix < next_unix:
+                ttb = time.localtime(float(unix/1000))
+                tim=strftime("%a %d %m %Y %H %M %S",ttb)
+                t = tim.split()
+                sunpos = getSunpos(nasa_lat, nasa_lon, nasa_timezone, t[3], t[2],
+                                   t[1], t[4], t[5], t[6])
+                to_db = [unix, t[0], t[1], t[2], t[3],
+                             t[4], t[5],t[6], artificial, sunpos[0],
+                             sunpos[1], 'Nan', 'Nan', artificial]
+                cursor.execute('INSERT OR IGNORE INTO ' + str(table) + ' VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', to_db)
+                unix = unix + 120000
+            i+=1
+        unix = data[i][0]
+        artificial = data[i][1]
+        next_unix = 1339225199000
+        while unix < next_unix:
+                ttb = time.localtime(float(unix/1000))
+                tim=strftime("%a %d %m %Y %H %M %S",ttb)
+                t = tim.split()
+                sunpos = getSunpos(nasa_lat, nasa_lon, nasa_timezone, t[3], t[2],
+                                   t[1], t[4], t[5], t[6])
+                to_db = [unix, t[0], t[1], t[2], t[3],
+                             t[4], t[5],t[6], artificial, sunpos[0],
+                             sunpos[1], 'Nan', 'Nan', artificial]
+                cursor.execute('INSERT OR IGNORE INTO ' + str(table) + ' VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', to_db)
+                unix = unix + 120000
+        connection.commit()
+
+
 ####################
-### SHORTCUT CODE ###
+### SHORTCUT CODE ##
 ####################
 
 def createDatabase():
     create_tables()
     createCloudData()
     createLightData()
-    
-
+    create_artificial()
+        
 def updateDatabase():
     updateCloudData()
     updateLightData()    
-
-
 
